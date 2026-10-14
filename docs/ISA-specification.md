@@ -38,23 +38,66 @@
 | Imm \[13\|11:5\] | rs2   | rs1   | Funct3 | Imm \[4:1\|12\] | opcode |
 
 
-### d) Load-use
-
-The dependent instruction depends on the value fetched by the load instruction which can only be done after passing the memory stage, hence a stall is introduced in the dependent instruction after decoding so that execution takes place with the load instruction’s value. Full forwarding does not imply no stalls at all.
-
-|                |     |     |     |       |     |     |     |
-| -------------- | --- | --- | --- | ----- | --- | --- | --- |
-| cycles         | 1   | 2   | 3   | 4     | 5   | 6   | 7   |
-| lw t0,0(s1)    | IF  | ID  | EX  | MEM   | WB  |     |     |
-|                |     |     |     |       |     |     |     |
-| add t2, t0, t3 |     | IF  | ID  | STALL | EX  | MEM | WB  |
-
-### e) Flag register
-
-A flag register stores information about the result of an operation, which may be helpful in some cases but it creates data dependencies between instructions and the branches that use them, which in turn creates extra hazards and additional forwarding and stalls so it would not benefit LIMO as small processor because it cannot accommodate extra data.
-
-### f) What breaks first
-
-As programs grow, branch reach breaks first because branch instructions have a limited offset range, causing a hard error when the code grows too large.
 
 
+##2.4 Instruction Set
+
+| class      | Mnemonic                 | Meaning                     | Syntax                        | operation                              | Format | RV321 |
+| ---------- | ------------------------ | --------------------------- | ----------------------------- | -------------------------------------- | ------ | ----- |
+| Arithmetic | kopanya                  | Add; increase               | kopanya rd, rs1, rs2          | R\[rd\]=R\[rs1\] + R\[rs2\]            | R      | add   |
+| Arithmetic | kopanya_h (h=hang)       | Add constant                | kopanya_h rd, rs1, immediate  | R\[rd\] + SignExt(imm)                 | I      | addi  |
+| Arithmetic | tlosa                    | Subtract                    | tlosa rd, rs1, rs2            | R\[rd\]=R\[rs1\] – R\[rs2\]            | R      | sub   |
+| Logic      | ritsisa_hl (l=lehoja)    | Shift right logic immediate | ritsisa_hl rd, rs1, immediate | R\[rd\]=R\[rs1\]\>\>imm                | I      | srli  |
+| Logic      | ritsisa_ht (t=ts\`ehali) | Shift left logic immediate  | ritsisa_ht rd,rs1,imm         | R\[rd\]=R\[rs1\] \<\<imm               | I      | slli  |
+| Logic      | ritsisa_t                | Shift left logic            | ritsisa_t rd,rs1, rs2         | R\[rd\]=R\[rs1\]\<\<R\[rs2\]           | R      | sll   |
+| Memory     | beha                     | store                       | beha                          | M\[R\[rs1\] + SignExt(imm)\] =R\[rs2\] |        | sw    |
+| Memory     | nka                      | load                        | nka rd, offset immediate(rs1) | R\[rd\]=M\[R\[rs1\] + SignExt(imm)\]   |        | lw    |
+| Branch     | lekana                   | equal                       | Lekana, rs1, rs2, label       | R\[rs1\] == R\[rs2\]                   | B      | beq   |
+| Branch     | fapana                   | Not equal                   | fapana rs1, rs2, label        | (R\[rs1\]! = R\[rs2\])? 1:0            | B      | bne   |
+## Lexical rule
+
+<u>How the assembler treats apostrophes</u>: In JavaScript, apostrophes are used to show that a character is a string; so to accommodate Sesotho words in this assembler apostrophe (\`), single quote (’) and underscore (\_) are considered to be equivalent, this means they are all valid syntax and will regulated using this JavaScript function -
+
+```javascript
+const LookFor_Regex = /^[a-zA-z][a-zA-z0-9`_]*$/;
+
+function regulateMnemonic(token) {
+  return token.toLowerCase().replace(/[`‘]/g, '_');
+}
+```
+
+## 2.5 Encoding Worked Example
+
+| Instruction              | Format | Field values                      | Binary (bit 31...0)                     | Hexadecimal |
+| ------------------------ | ------ | --------------------------------- | --------------------------------------- | ----------- |
+| kopanya x10, x5, x6      | R      | x6=0110<br>x5=0101<br>x10=1010    | 00000000 0110 00 0101 000 1010 0110011  | 0x00614533  |
+| kopanya_h x8, x5,2       | I      | x8=1000<br>x5=0101                | 00000000001000 0101000100000 10011      | 0x00214413  |
+| beha x5, 8(x6)           | S      |                                   |                                         |             |
+| lekana x5, x6, t’soana   | B      |                                   |                                         |             |
+
+
+## Design-Decision Log
+
+### a) Register-file size
+
+LIMO uses 16 registers instead of RISC-V’s 32 registers, reducing each register specifier from 5 bits to 4 bits. This saves 3 bits in a three-register instruction, which can be reallocated to increase immediate fields from 12 bits to 14 bits, extending the sign range from -2,048 - 2,047 to -8,192 – 8,191.
+
+> Smaller 4 bits register IDs also reduce hazard detection and comparison width is reduced from 5 bits to 4 bits, while reducing register-file multiplexing complexity. The main cost is higher register pressure; programs with many simultaneously live variable may require more spills and reloads to memory, increasing memory traffic, instruction count, and potentially execution time. Thus, 16 register trade register capacity for simpler encoding and hardware and large immediate.
+>
+> A signed number with n bits the range is -2^(n-1) to 2^(n-1)-1
+>
+> for 12 bits: -2^(12-1) to 2^((12-1)) -1
+>
+> new 14 bits: -2^(14-1) to 2^((14-1)) -1
+
+-2^(13) to 2^((13)) -1
+
+=> -8192 to 8191
+
+### b) Architectural or microarchitectural
+
+Architecture registers include x0-x15 and PC, which can be seen by the programmer. Micro-architectural registers like IR and pipeline registers like IF/ID, ID/EX, EX/MEM, MEM/WB cannot be seen by the programmer and are used to hold and control signals between clock cycles. Micro-architectural registers must not be specific to the ISA because the ISA defines the software and hardware interface not the physical implementation. Pipeline registers cannot be specified according to a fixed 5 stage pipeline as well, because it will prevent hardware architects from modifying, building single-cycle models, or using out-of-order execution without breaking compatibility.
+
+### c) Branch resolution
+
+Resolution happens at ‘execute’ in LIMO, it requires branch comparison and target-address hardware in this stage of the 5-stage pipeline. It, however, avoids waiting until a later stage, which costs the work and hardware needed to resolve the branch issue in execute plus the lost cycles when branch is taken, and with a taken branch, IF and ID are flushed (if not used, because they are included in the pipeline before the exact branch execution).
