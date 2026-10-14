@@ -76,4 +76,28 @@ function regulateMnemonic(token) {
 | lekana x5, x6, t’soana   | B      |                                   |                                         |             |
 
 
+## Design-Decision Log
 
+### a) Register-file size
+
+LIMO uses 16 registers instead of RISC-V’s 32 registers, reducing each register specifier from 5 bits to 4 bits. This saves 3 bits in a three-register instruction, which can be reallocated to increase immediate fields from 12 bits to 14 bits, extending the sign range from -2,048 - 2,047 to -8,192 – 8,191.
+
+> Smaller 4 bits register IDs also reduce hazard detection and comparison width is reduced from 5 bits to 4 bits, while reducing register-file multiplexing complexity. The main cost is higher register pressure; programs with many simultaneously live variable may require more spills and reloads to memory, increasing memory traffic, instruction count, and potentially execution time. Thus, 16 register trade register capacity for simpler encoding and hardware and large immediate.
+>
+> A signed number with n bits the range is -2^(n-1) to 2^(n-1)-1
+>
+> for 12 bits: -2^(12-1) to 2^((12-1)) -1
+>
+> new 14 bits: -2^(14-1) to 2^((14-1)) -1
+
+-2^(13) to 2^((13)) -1
+
+=> -8192 to 8191
+
+### b) Architectural or microarchitectural
+
+Architecture registers include x0-x15 and PC, which can be seen by the programmer. Micro-architectural registers like IR and pipeline registers like IF/ID, ID/EX, EX/MEM, MEM/WB cannot be seen by the programmer and are used to hold and control signals between clock cycles. Micro-architectural registers must not be specific to the ISA because the ISA defines the software and hardware interface not the physical implementation. Pipeline registers cannot be specified according to a fixed 5 stage pipeline as well, because it will prevent hardware architects from modifying, building single-cycle models, or using out-of-order execution without breaking compatibility.
+
+### c) Branch resolution
+
+Resolution happens at ‘execute’ in LIMO, it requires branch comparison and target-address hardware in this stage of the 5-stage pipeline. It, however, avoids waiting until a later stage, which costs the work and hardware needed to resolve the branch issue in execute plus the lost cycles when branch is taken, and with a taken branch, IF and ID are flushed (if not used, because they are included in the pipeline before the exact branch execution).
