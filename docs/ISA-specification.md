@@ -54,4 +54,26 @@
 | Memory     | nka                      | load                        | nka rd, offset immediate(rs1) | R\[rd\]=M\[R\[rs1\] + SignExt(imm)\]   |        | lw    |
 | Branch     | lekana                   | equal                       | Lekana, rs1, rs2, label       | R\[rs1\] == R\[rs2\]                   | B      | beq   |
 | Branch     | fapana                   | Not equal                   | fapana rs1, rs2, label        | (R\[rs1\]! = R\[rs2\])? 1:0            | B      | bne   |
+## Lexical rule
+
+<u>How the assembler treats apostrophes</u>: In JavaScript, apostrophes are used to show that a character is a string; so to accommodate Sesotho words in this assembler apostrophe (\`), single quote (’) and underscore (\_) are considered to be equivalent, this means they are all valid syntax and will regulated using this JavaScript function -
+
+```javascript
+const LookFor_Regex = /^[a-zA-z][a-zA-z0-9`_]*$/;
+
+function regulateMnemonic(token) {
+  return token.toLowerCase().replace(/[`‘]/g, '_');
+}
+```
+
+## 2.5 Encoding Worked Example
+
+| Instruction              | Format | Field values                      | Binary (bit 31...0)                     | Hexadecimal |
+| ------------------------ | ------ | --------------------------------- | --------------------------------------- | ----------- |
+| kopanya x10, x5, x6      | R      | x6=0110<br>x5=0101<br>x10=1010    | 00000000 0110 00 0101 000 1010 0110011  | 0x00614533  |
+| kopanya_h x8, x5,2       | I      | x8=1000<br>x5=0101                | 00000000001000 0101000100000 10011      | 0x00214413  |
+| beha x5, 8(x6)           | S      |                                   |                                         |             |
+| lekana x5, x6, t’soana   | B      |                                   |                                         |             |
+
+
 
