@@ -36,3 +36,25 @@
 | Imm \[13:0\]     |       | rs1   | Funct3 | rd              | opcode |
 | Imm \[13:7\]     | rs2   | rs1   | Funct3 | Imm \[6:0\]     | opcode |
 | Imm \[13\|11:5\] | rs2   | rs1   | Funct3 | Imm \[4:1\|12\] | opcode |
+
+
+### d) Load-use
+
+The dependent instruction depends on the value fetched by the load instruction which can only be done after passing the memory stage, hence a stall is introduced in the dependent instruction after decoding so that execution takes place with the load instruction’s value. Full forwarding does not imply no stalls at all.
+
+|                |     |     |     |       |     |     |     |
+| -------------- | --- | --- | --- | ----- | --- | --- | --- |
+| cycles         | 1   | 2   | 3   | 4     | 5   | 6   | 7   |
+| lw t0,0(s1)    | IF  | ID  | EX  | MEM   | WB  |     |     |
+|                |     |     |     |       |     |     |     |
+| add t2, t0, t3 |     | IF  | ID  | STALL | EX  | MEM | WB  |
+
+### e) Flag register
+
+A flag register stores information about the result of an operation, which may be helpful in some cases but it creates data dependencies between instructions and the branches that use them, which in turn creates extra hazards and additional forwarding and stalls so it would not benefit LIMO as small processor because it cannot accommodate extra data.
+
+### f) What breaks first
+
+As programs grow, branch reach breaks first because branch instructions have a limited offset range, causing a hard error when the code grows too large.
+
+
