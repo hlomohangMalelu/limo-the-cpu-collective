@@ -36,3 +36,22 @@
 | Imm \[13:0\]     |       | rs1   | Funct3 | rd              | opcode |
 | Imm \[13:7\]     | rs2   | rs1   | Funct3 | Imm \[6:0\]     | opcode |
 | Imm \[13\|11:5\] | rs2   | rs1   | Funct3 | Imm \[4:1\|12\] | opcode |
+
+
+
+
+##2.4 Instruction Set
+
+| class      | Mnemonic                 | Meaning                     | Syntax                        | operation                              | Format | RV321 |
+| ---------- | ------------------------ | --------------------------- | ----------------------------- | -------------------------------------- | ------ | ----- |
+| Arithmetic | kopanya                  | Add; increase               | kopanya rd, rs1, rs2          | R\[rd\]=R\[rs1\] + R\[rs2\]            | R      | add   |
+| Arithmetic | kopanya_h (h=hang)       | Add constant                | kopanya_h rd, rs1, immediate  | R\[rd\] + SignExt(imm)                 | I      | addi  |
+| Arithmetic | tlosa                    | Subtract                    | tlosa rd, rs1, rs2            | R\[rd\]=R\[rs1\] – R\[rs2\]            | R      | sub   |
+| Logic      | ritsisa_hl (l=lehoja)    | Shift right logic immediate | ritsisa_hl rd, rs1, immediate | R\[rd\]=R\[rs1\]\>\>imm                | I      | srli  |
+| Logic      | ritsisa_ht (t=ts\`ehali) | Shift left logic immediate  | ritsisa_ht rd,rs1,imm         | R\[rd\]=R\[rs1\] \<\<imm               | I      | slli  |
+| Logic      | ritsisa_t                | Shift left logic            | ritsisa_t rd,rs1, rs2         | R\[rd\]=R\[rs1\]\<\<R\[rs2\]           | R      | sll   |
+| Memory     | beha                     | store                       | beha                          | M\[R\[rs1\] + SignExt(imm)\] =R\[rs2\] |        | sw    |
+| Memory     | nka                      | load                        | nka rd, offset immediate(rs1) | R\[rd\]=M\[R\[rs1\] + SignExt(imm)\]   |        | lw    |
+| Branch     | lekana                   | equal                       | Lekana, rs1, rs2, label       | R\[rs1\] == R\[rs2\]                   | B      | beq   |
+| Branch     | fapana                   | Not equal                   | fapana rs1, rs2, label        | (R\[rs1\]! = R\[rs2\])? 1:0            | B      | bne   |
+
