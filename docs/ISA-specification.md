@@ -39,9 +39,46 @@
 
 
 
+
+##2.4 Instruction Set
+
+| class      | Mnemonic                 | Meaning                     | Syntax                        | operation                              | Format | RV321 |
+| ---------- | ------------------------ | --------------------------- | ----------------------------- | -------------------------------------- | ------ | ----- |
+| Arithmetic | kopanya                  | Add; increase               | kopanya rd, rs1, rs2          | R\[rd\]=R\[rs1\] + R\[rs2\]            | R      | add   |
+| Arithmetic | kopanya_h (h=hang)       | Add constant                | kopanya_h rd, rs1, immediate  | R\[rd\] + SignExt(imm)                 | I      | addi  |
+| Arithmetic | tlosa                    | Subtract                    | tlosa rd, rs1, rs2            | R\[rd\]=R\[rs1\] – R\[rs2\]            | R      | sub   |
+| Logic      | ritsisa_hl (l=lehoja)    | Shift right logic immediate | ritsisa_hl rd, rs1, immediate | R\[rd\]=R\[rs1\]\>\>imm                | I      | srli  |
+| Logic      | ritsisa_ht (t=ts\`ehali) | Shift left logic immediate  | ritsisa_ht rd,rs1,imm         | R\[rd\]=R\[rs1\] \<\<imm               | I      | slli  |
+| Logic      | ritsisa_t                | Shift left logic            | ritsisa_t rd,rs1, rs2         | R\[rd\]=R\[rs1\]\<\<R\[rs2\]           | R      | sll   |
+| Memory     | beha                     | store                       | beha                          | M\[R\[rs1\] + SignExt(imm)\] =R\[rs2\] |        | sw    |
+| Memory     | nka                      | load                        | nka rd, offset immediate(rs1) | R\[rd\]=M\[R\[rs1\] + SignExt(imm)\]   |        | lw    |
+| Branch     | lekana                   | equal                       | Lekana, rs1, rs2, label       | R\[rs1\] == R\[rs2\]                   | B      | beq   |
+| Branch     | fapana                   | Not equal                   | fapana rs1, rs2, label        | (R\[rs1\]! = R\[rs2\])? 1:0            | B      | bne   |
+## Lexical rule
+
+<u>How the assembler treats apostrophes</u>: In JavaScript, apostrophes are used to show that a character is a string; so to accommodate Sesotho words in this assembler apostrophe (\`), single quote (’) and underscore (\_) are considered to be equivalent, this means they are all valid syntax and will regulated using this JavaScript function -
+
+```javascript
+const LookFor_Regex = /^[a-zA-z][a-zA-z0-9`_]*$/;
+
+function regulateMnemonic(token) {
+  return token.toLowerCase().replace(/[`‘]/g, '_');
+}
+```
+
+## 2.5 Encoding Worked Example
+
+| Instruction              | Format | Field values                      | Binary (bit 31...0)                     | Hexadecimal |
+| ------------------------ | ------ | --------------------------------- | --------------------------------------- | ----------- |
+| kopanya x10, x5, x6      | R      | x6=0110<br>x5=0101<br>x10=1010    | 00000000 0110 00 0101 000 1010 0110011  | 0x00614533  |
+| kopanya_h x8, x5,2       | I      | x8=1000<br>x5=0101                | 00000000001000 0101000100000 10011      | 0x00214413  |
+| beha x5, 8(x6)           | S      |                                   |                                         |             |
+| lekana x5, x6, t’soana   | B      |                                   |                                         |             |
+
+
 ## Design-Decision Log
 
-### 1) Register-file size
+### a) Register-file size
 
 LIMO uses 16 registers instead of RISC-V’s 32 registers, reducing each register specifier from 5 bits to 4 bits. This saves 3 bits in a three-register instruction, which can be reallocated to increase immediate fields from 12 bits to 14 bits, extending the sign range from -2,048 - 2,047 to -8,192 – 8,191.
 
