@@ -65,4 +65,33 @@
     }
 
 
+    //
+
+        function parseRegister(text, line) {
+        const lower = text.toLowerCase();
+        const numbered = lower.match(/^x(\d+)$/);
+
+        if (numbered) {
+            if (+numbered[1] >= NUM_REGS) {
+                throw new AssemblyError(
+                    line,
+                    `register ${text} does not exist; LIMO has x0 to x${NUM_REGS - 1}.`
+                );
+            }
+
+            return +numbered[1];
+        }
+
+        const index = REG_ALIASES.indexOf(lower);
+
+        if (index < 0) {
+            throw new AssemblyError(
+                line,
+                `"${text}" is not a register. Use x0–x${NUM_REGS - 1} or a name such as t0, s1, a0.`
+            );
+        }
+
+        return index;
+    }
+
 });    
