@@ -115,4 +115,14 @@
         };
     }
 
+
+    function expectOperands(operands, count, shape, mnemonic, line) {
+        if (operands.length !== count) {
+            throw new AssemblyError(
+                line,
+                `${mnemonic} needs ${count} operands (${shape}) but you wrote ${operands.length}.`
+            );
+        }
+    }
+
 });    
