@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIMO</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="toolbar">
+  <button id="assemble" title="Assemble (Ctrl+Enter)"> Assemble</button>
+  <button id="open" title="Open a .limo file">Open .limo</button>
+  <input id="file" type="file" accept=".limo" hidden>
+  <label class="grow-0">Example
+    <select id="example" aria-label="Load an example program"><option value="">Choose…</option></select>
+  </label>
+  <span class="sep"></span>
+  <span class="modes" role="radiogroup" aria-label="Machine code display">
+    <label><input type="radio" name="mode" value="hex" checked> Hex</label>
+    <label><input type="radio" name="mode" value="bin"> Binary</label>
+  </span>
+  <h1>LIMO</h1>
+</header>
+
+<main class="panes">
+  <section class="pane" aria-labelledby="hSource">
+    <div class="heading"><b id="hSource">Source code</b><span id="asmStatus" class="status-chip">Ready</span></div>
+    <div class="editor"><pre id="lines" aria-hidden="true">1</pre><textarea id="src" spellcheck="false" aria-label="LIMO source code"></textarea></div>
+    <footer><span>Comments start with # or //. Immediates: decimal or 0x hex. The characters <code>'</code> <code>`</code> <code>’</code> are all read as <code>_</code>.</span></footer>
+  </section>
+
+  <section class="pane" aria-labelledby="hCode">
+    <div class="heading"><b id="hCode">Machine code</b></div>
+    <div id="code" class="code" aria-live="polite"></div>
+    <footer><span id="count">0 instructions</span>
+      <span class="legend"><b class="f-op">opcode</b> <b class="f-rd">rd</b> <b class="f-f3">funct3</b> <b class="f-rs1">rs1</b> <b class="f-rs2">rs2</b> <b class="f-imm">imm</b> <b class="f-f7">funct7</b></span></footer>
+  </section>
+
+  <div class="rcol">
+    <section class="pane" aria-labelledby="hGpr">
+      <div class="heading"><b id="hGpr">GPR</b>
+        <select id="regFormat" aria-label="Register value format"><option value="hex">Hex</option><option value="dec">Decimal</option></select></div>
+      <div class="scroll"><table><thead><tr><th>Name</th><th>Alias · Sesotho</th><th>Value</th></tr></thead><tbody id="regTable"></tbody></table></div>
+    </section>
+    <section class="pane" aria-labelledby="hRef">
+      <div class="heading"><b id="hRef">Instruction reference</b></div>
+      <div class="scroll"><table><thead><tr><th>Mnemonic</th><th>Format</th><th>Operands</th><th>RV32I</th></tr></thead><tbody id="isaTable"></tbody></table></div>
+    </section>
+  </div>
+</main>
+
+<section class="pane console" aria-labelledby="hMsg">
+  <div class="heading"><b id="hMsg">Messages</b></div>
+  <div id="output" role="log" aria-live="polite"></div>
+</section>
+
+<footer class="status"><span id="status">Ready</span><span>LIMO · 32-bit load-store ISA · 16 registers · 14-bit immediates</span></footer>
+
+<script src="src/isa.js"></script>
+<script src="src/assembler.js"></script>
+<script src="src/examples.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
