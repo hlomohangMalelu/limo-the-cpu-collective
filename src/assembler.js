@@ -125,4 +125,106 @@
         }
     }
 
+
+       /**
+     * Parse the operands of one instruction into register numbers,
+     * an immediate value, or a label.
+     */
+    function parseOperands(mnemonic, syntax, operands, line) {
+        switch (syntax) {
+            case "R":
+                expectOperands(
+                    operands,
+                    3,
+                    "rd, rs1, rs2",
+                    mnemonic,
+                    line
+                );
+
+                return {
+                    rd: parseRegister(operands[0], line),
+                    rs1: parseRegister(operands[1], line),
+                    rs2: parseRegister(operands[2], line),
+                };
+
+            case "I": {
+                expectOperands(
+                    operands,
+                    3,
+                    "rd, rs1, immediate",
+                    mnemonic,
+                    line
+                );
+
+                const imm = parseNumber(operands[2], line);
+                const isShift = INSTRUCTIONS[mnemonic].rv32i !== "addi";
+
+                if (isShift && (imm < 0 || imm > 31)) {
+                    throw new AssemblyError(
+                        line,
+                        `a shift amount must be between 0 and 31, not ${imm}.`
+                    );
+                }
+
+                return {
+                    rd: parseRegister(operands[0], line),
+                    rs1: parseRegister(operands[1], line),
+                    imm,
+                };
+            }
+
+            case "L": {
+                expectOperands(
+                    operands,
+                    2,
+                    "rd, offset(rs1)",
+                    mnemonic,
+                    line
+                );
+
+                const mem = parseMemoryOperand(operands[1], line);
+
+                return {
+                    rd: parseRegister(operands[0], line),
+                    rs1: mem.base,
+                    imm: mem.imm,
+                };
+            }
+
+            case "S": {
+                expectOperands(
+                    operands,
+                    2,
+                    "rs2, offset(rs1)",
+                    mnemonic,
+                    line
+                );
+
+                const mem = parseMemoryOperand(operands[1], line);
+
+                return {
+                    rs2: parseRegister(operands[0], line),
+                    rs1: mem.base,
+                    imm: mem.imm,
+                };
+            }
+
+            case "B":
+                expectOperands(
+                    operands,
+                    3,
+                    "rs1, rs2, label",
+                    mnemonic,
+                    line
+                );
+
+                return {
+                    rs1: parseRegister(operands[0], line),
+                    rs2: parseRegister(operands[1], line),
+                    label: operands[2],
+                };
+        }
+    }
+
+
 });    
