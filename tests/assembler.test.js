@@ -444,3 +444,209 @@ test("failed assembly returns no machine code", () => {
     assert.deepEqual(result.words, []);
     assert.deepEqual(result.instructions, []);
 });
+
+// Comments, blanks, and empty input
+// ------------------------------------------------------------------
+
+test("# and // comments and blank lines are ignored", () => {
+    const result = assemble(
+        "# full line\n\n" +
+        "  kopanya x1, x2, x3  # trailing\n" +
+        "// another\n" +
+        "kopanya x1, x2, x3 // trailing too"
+    );
+
+    assert.equal(result.words.length, 2);
+    assert.equal(result.words[0], result.words[1]);
+});
+
+test("empty source assembles to nothing without error", () => {
+    const result = assemble("");
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.words, []);
+});
+
+test("Windows line endings are handled", () => {
+    assert.equal(
+        assemble(
+            "kopanya x1, x2, x3\r\n" +
+            "kopanya x1, x2, x3\r\n"
+        ).words.length,
+        2
+    );
+});
+
+test("instruction addresses go up in steps of 4", () => {
+    const { instructions } = assemble(
+        "kopanya x1, x1, x1\n" +
+        "kopanya x1, x1, x1\n" +
+        "kopanya x1, x1, x1"
+    );
+
+    assert.deepEqual(
+        instructions.map((instruction) => instruction.address),
+        [0, 4, 8]
+    );
+});
+
+// ------------------------------------------------------------------
+// Round trips and field layout
+// ------------------------------------------------------------------
+
+test("every instruction in the ISA survives assemble -> disassemble", () => {
+    const sample = {
+        R: (m) => `${m} x3, x4, x5`,
+        I: (m) => `${m} x3, x4, 6`,
+        L: (m) => `${m} x3, 12(x4)`,
+        S: (m) => `${m} x5, -12(x4)`,
+        B: (m) => `${m} x4, x5, t\nt: kopanya x0, x0, x0`,
+    };
+
+    for (const [mnemonic, spec] of Object.entries(INSTRUCTIONS)) {
+        const result = assemble(sample[spec.syntax](mnemonic));
+
+        assert.equal(result.ok, true, mnemonic);
+
+        const back = disassemble(result.words[0]);
+
+        assert.equal(back.mnemonic, mnemonic);
+        assert.equal(back.syntax, spec.syntax);
+    }
+});
+
+test("disassemble gives readable text for each format", () => {
+    assert.equal(
+        disassemble(word("kopanya x7, x5, x6")).text,
+        "kopanya x7, x5, x6"
+    );
+
+    assert.equal(
+        disassemble(word("kopanya_h x1, x0, -1")).text,
+        "kopanya_h x1, x0, -1"
+    );
+
+    assert.equal(
+        disassemble(word("nka x8, 4(x2)")).text,
+        "nka x8, 4(x2)"
+    );
+
+    assert.equal(
+        disassemble(word("beha x7, -12(x2)")).text,
+        "beha x7, -12(x2)"
+    );
+});
+
+test('an unknown opcode disassembles to "?" instead of throwing', () => {
+    assert.equal(disassemble(0xffffffff).mnemonic, null);
+});
+
+test("the colour-coded fields of every word are contiguous and rebuild the word", () => {
+    const sources = [
+        "kopanya x7, x5, x6",
+        "kopanya_h x1, x0, -1",
+        "nka x8, 4(x2)",
+        "beha x7, -12(x2)",
+    ];
+
+    for (const source of sources) {
+        const { instructions, words } = assemble(source);
+        const fields = splitFields(words[0], instructions[0].syntax);
+
+        assert.equal(
+            fields.map((field) => field.bits).join(""),
+            words[0].toString(2).padStart(32, "0")
+        );
+
+        assert.equal(
+            fields.reduce((total, field) => total + field.bits.length, 0),
+            32
+        );
+    }
+});
+
+test("each format layout covers bits 31..0 exactly once", () => {
+    for (const [syntax, fields] of Object.entries(FIELDS_BY_SYNTAX)) {
+        const used = Array(32).fill(0);
+
+        fields.forEach(([hi, lo]) => {
+            for (let bit = lo; bit <= hi; bit++) {
+                used[bit]++;
+            }
+        });
+
+        assert.ok(used.every((count) => count === 1), `format ${syntax}`);
+    }
+});
+
+test("no two instructions share the same opcode / funct3 / funct7 (the encoding is decodable)", () => {
+    const seen = new Set();
+
+    for (const [name, instruction] of Object.entries(INSTRUCTIONS)) {
+        const key = [
+            instruction.opcode,
+            instruction.funct3,
+            instruction.syntax === "R" ? instruction.funct7 : "-",
+        ].join("/");
+
+        assert.ok(!seen.has(key), `${name} duplicates another encoding`);
+        seen.add(key);
+    }
+});
+
+test("encode() masks a negative immediate to 14 bits", () => {
+    assert.equal(
+        encode({
+            syntax: "I",
+            opcode: 0x13,
+            funct3: 0,
+            rd: 1,
+            imm: -1,
+        }) >>> 18,
+        0x3fff
+    );
+});
+
+test("hex32 pads to eight digits", () => {
+    assert.equal(hex32(0x293), "0x00000293");
+});
+
+// ------------------------------------------------------------------
+// The shipped example programs
+// ------------------------------------------------------------------
+
+for (const name of Object.keys(EXAMPLES)) {
+    test(`example ${name}.limo assembles without errors`, () => {
+        assert.deepEqual(assemble(EXAMPLES[name]).errors, []);
+    });
+
+    test(
+        `src/examples.js matches examples/${name}.limo (run "npm run examples" if this fails)`,
+        () => {
+            // Compare with Windows line endings (CRLF) turned into LF,
+            // because that is what the generated template literals hold.
+            const onDisk = fs
+                .readFileSync(
+                    path.join(__dirname, "..", "examples", `${name}.limo`),
+                    "utf8"
+                )
+                .replace(/\r\n/g, "\n");
+
+            assert.equal(EXAMPLES[name], onDisk);
+        }
+    );
+}
+
+test("sum.limo: the loop branches back 8 bytes and the program is 6 instructions", () => {
+    const result = assemble(EXAMPLES.sum);
+
+    assert.equal(result.words.length, 6);
+    assert.equal(result.instructions[4].imm, -8);
+});
+
+test("branch.limo: both forward branches skip one instruction (+8)", () => {
+    const { instructions } = assemble(EXAMPLES.branch);
+
+    assert.equal(instructions[3].imm, 8);
+    assert.equal(instructions[4].imm, 8);
+});
