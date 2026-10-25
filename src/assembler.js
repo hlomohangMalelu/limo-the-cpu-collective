@@ -94,4 +94,25 @@
         return index;
     }
 
+
+        /**
+     * Parse a memory operand.
+     * Example: "8(x5)" -> { imm: 8, base: 5 }
+     */
+    function parseMemoryOperand(text, line) {
+        const match = text.match(/^(.+)\(([^()]+)\)$/);
+
+        if (!match) {
+            throw new AssemblyError(
+                line,
+                `write the address as offset(register), for example 0(x5); you wrote "${text}".`
+            );
+        }
+
+        return {
+            imm: parseNumber(match[1].trim(), line),
+            base: parseRegister(match[2].trim(), line),
+        };
+    }
+
 });    
