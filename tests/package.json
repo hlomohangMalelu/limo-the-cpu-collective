@@ -1,0 +1,10 @@
+{
+  "name": "limo-the-cpu-collective",
+  "version": "0.2.0",
+  "description": "LIMO: a Sesotho-language RISC-V derived ISA. Milestone 2: frozen ISA, design documents and a working, tested assembler.",
+  "scripts": {
+    "test": "node --test tests/assembler.test.js",
+    "examples": "node scripts/sync-examples.js"
+  },
+  "license": "MIT"
+}
