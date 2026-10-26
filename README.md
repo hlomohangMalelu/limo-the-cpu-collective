@@ -3,8 +3,7 @@
 LIMO is a Sesotho-language, RISC-V-derived 32-bit load–store ISA (CS3520 group project).
 **Milestone 2** delivers the frozen ISA, the design documents, and a working assembler with unit tests.
 
-Live site: Add the actual GitHub Pages URL here after the deployment succeeds. Do not submit the placeholder as a live URL.
-Team and roles: *(add)*
+Live site: 
 
 ## Run, test, deploy
 
