@@ -1,0 +1,7 @@
+
+        kopanya_h x5, x0, 0      # sum = 0
+        kopanya_h x6, x0, 5      # counter = 5
+tlola:   kopanya   x5, x5, x6     # sum = sum + counter
+        kopanya_h x6, x6, -1     # counter = counter - 1
+        fapana    x6, x0, tlola  # repeat while counter != 0
+        beha      x5, 0(x0)      # store the result

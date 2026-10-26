@@ -1,0 +1,8 @@
+
+        kopanya_h  x5, x0, 0x0F
+        ritsisa_ht x6, x5, 2     # x6 = x5 << 2
+        ritsisa_hl x7, x6, 1     # x7 = x6 >> 1
+        lekana     x5, x6, tlola  # 15 != 60, not taken
+        fapana     x5, x6, khutlo  # 15 != 60, taken
+tlola:   kopanya_h  x8, x0, 99    # skipped
+khutlo:   kopanya_h  x9, x0, 7

@@ -1,0 +1,8 @@
+
+        kopanya_h x5, x0, 10
+        kopanya_h x6, x0, 25
+        kopanya   x7, x5, x6     # x7 = 35
+        beha      x7, 0(x0)      # memory[0] = 35
+        nka       x8, 0(x0)      # x8 = memory[0]
+        kopanya   x9, x8, x5     # uses x8 right after the load
+        tlosa     x10, x9, x6    # x10 = x9 - x6
