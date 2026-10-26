@@ -1,0 +1,432 @@
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    background: #efefef;
+    color: #20242a;
+    font: 13px 'Segoe UI', Arial, sans-serif;
+    min-height: 560px;
+}
+
+button,
+select,
+input,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: 1px solid #c6cbd0;
+    background: #fafafa;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+button:hover {
+    background: #e7f2fa;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #1a6aa8;
+    outline-offset: 1px;
+}
+
+code {
+    font: 12px Consolas, monospace;
+    background: #f1f3f4;
+    padding: 0 3px;
+    border-radius: 2px;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: #fafafa;
+    border-bottom: 1px solid #c5c9ce;
+    flex-wrap: wrap;
+}
+
+.toolbar h1 {
+    margin: 0 0 0 auto;
+    font-size: 15px;
+}
+
+.toolbar h1 small {
+    font-weight: 400;
+    color: #68727b;
+    margin-left: 6px;
+}
+
+.toolbar label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toolbar select {
+    padding: 4px 6px;
+}
+
+.sep {
+    width: 1px;
+    height: 22px;
+    background: #cfd3d7;
+}
+
+.modes {
+    display: flex;
+    gap: 10px;
+}
+
+/* Main panes layout */
+.panes {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns:
+        minmax(240px, 1.1fr)
+        minmax(280px, 1.1fr)
+        minmax(220px, 0.7fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: #fff;
+    border: 1px solid #c5c9ce;
+}
+
+.heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 8px;
+    min-height: 32px;
+    background: #fafafa;
+    border-bottom: 1px solid #d9dde1;
+}
+
+.heading b {
+    font-size: 12px;
+}
+
+.pane footer {
+    padding: 5px 8px;
+    border-top: 1px solid #e0e3e6;
+    color: #58626b;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Status chips */
+.status-chip {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #eceff1;
+    color: #46515a;
+    border: 1px solid #d0d5d9;
+}
+
+.status-chip.ok {
+    background: #e9f7ec;
+    color: #075b20;
+    border-color: #9ad0a9;
+}
+
+.status-chip.bad {
+    background: #fdecea;
+    color: #8c1d18;
+    border-color: #e6a8a3;
+}
+
+/* Source editor */
+.editor {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.editor pre {
+    width: 38px;
+    flex: none;
+    margin: 0;
+    padding: 9px 6px;
+    text-align: right;
+    overflow: hidden;
+    background: #f5f6f7;
+    border-right: 1px solid #e1e3e6;
+    color: #8b939b;
+    font: 12px/1.65 Consolas, monospace;
+}
+
+textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border: 0;
+    outline: 0;
+    padding: 9px 10px;
+    font: 12px/1.65 Consolas, monospace;
+    white-space: pre;
+    overflow: auto;
+    color: #293d52;
+}
+
+textarea:focus-visible {
+    outline-offset: -2px;
+}
+
+/* Code and instruction display */
+.code {
+    flex: 1;
+    overflow: auto;
+    font: 12px/1.8 Consolas, monospace;
+}
+
+.coderow {
+    display: grid;
+    grid-template-columns: 36px max-content max-content 34px;
+    gap: 10px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    min-width: max-content;
+}
+
+.coderow:nth-child(even) {
+    background: #fafbfb;
+}
+
+.addr {
+    color: #68717b;
+    text-align: right;
+}
+
+.word {
+    color: #064c96;
+}
+
+.word span {
+    margin-right: 2px;
+}
+
+.coderow.bin .word span {
+    border-bottom: 2px solid;
+}
+
+.dis {
+    min-width: 0;
+}
+
+.lbl {
+    color: #8a5a00;
+    font-weight: 700;
+}
+
+.ln {
+    color: #98a0a8;
+    text-align: right;
+}
+
+.empty {
+    padding: 20px;
+    color: #7b838b;
+    text-align: center;
+}
+
+/* Instruction field colors */
+.f-op {
+    color: #b3261e;
+}
+
+.f-rd {
+    color: #0a7d33;
+}
+
+.f-f3 {
+    color: #8a5a00;
+}
+
+.f-rs1 {
+    color: #1a5fb4;
+}
+
+.f-rs2 {
+    color: #7d3c98;
+}
+
+.f-imm {
+    color: #c25700;
+}
+
+.f-f7 {
+    color: #555;
+}
+
+.legend b {
+    margin-left: 6px;
+}
+
+.coderow .f-op,
+.coderow .f-rd,
+.coderow .f-f3,
+.coderow .f-rs1,
+.coderow .f-rs2,
+.coderow .f-imm,
+.coderow .f-f7 {
+    border-bottom-color: currentColor;
+}
+
+/* Right column and tables */
+.scroll {
+    flex: 1;
+    overflow: auto;
+}
+
+.rcol {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.rcol .pane {
+    flex: 1 1 0;
+    min-height: 110px;
+}
+
+.heading select {
+    padding: 2px 6px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font: 12px Consolas, monospace;
+    margin-bottom: 10px;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background: #f7f8f9;
+    font: 11px 'Segoe UI', sans-serif;
+    text-align: left;
+    padding: 6px;
+}
+
+td {
+    padding: 3px 6px;
+    border-top: 1px solid #e0e3e6;
+    white-space: nowrap;
+}
+
+#regTable td:nth-child(3) {
+    color: #004d9a;
+}
+
+.changed {
+    background: #ffb81c;
+}
+
+#regTable .pcrow td {
+    border-top: 2px solid #c6cbd0;
+    font-weight: 700;
+}
+
+/* Console and output */
+.console {
+    margin: 0 8px 8px;
+    height: 130px;
+    flex: none;
+}
+
+#output {
+    flex: 1;
+    overflow: auto;
+    padding: 6px 8px;
+    font: 12px/1.6 Consolas, monospace;
+}
+
+#output .err button.linkish {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: #b3261e;
+    text-align: left;
+    font: inherit;
+    text-decoration: underline;
+}
+
+#output .err::before {
+    content: '✗ ';
+    color: #b3261e;
+}
+
+.okmsg {
+    color: #075b20;
+}
+
+.okmsg::before {
+    content: '✓ ';
+}
+
+/* Bottom status bar */
+.status {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 12px;
+    background: #fafafa;
+    border-top: 1px solid #c7cbd0;
+    color: #59616a;
+    font-size: 11px;
+    flex-wrap: wrap;
+}
+
+/* Responsive layout */
+@media (max-width: 900px) {
+    body {
+        height: auto;
+    }
+
+    .panes {
+        grid-template-columns: 1fr;
+    }
+
+    .pane {
+        min-height: 240px;
+    }
+
+    .toolbar h1 {
+        margin-left: 0;
+        width: 100%;
+    }
+}
