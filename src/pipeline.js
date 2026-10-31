@@ -56,4 +56,16 @@
         };
     }
 
+    
+    /** True when every instruction has left the pipeline. */
+    function isFinished(state) {
+        return (
+            state.pc >> 2 >= state.instructionMemory.length &&
+            !state.ifid.valid &&
+            !state.idex.valid &&
+            !state.exmem.valid &&
+            !state.memwb.valid
+        );
+    }
+
 });
