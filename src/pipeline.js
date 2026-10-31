@@ -84,4 +84,34 @@
 
         throw new Error(`Unknown ALU operation ${operation}`);
     }
+
+
+
+    /** WB: write the result into the register file. */
+    function writeBack(state, memwb, trace) {
+        if (!memwb.valid) {
+            return;
+        }
+
+        trace.active[4] = true;
+        trace.instrs[4] = memwb.instr;
+
+        const value = memwb.ctl.MemtoReg ? memwb.memData : memwb.aluResult;
+        const writes = !!(memwb.ctl.RegWrite && memwb.rd !== 0);
+
+        Object.assign(trace.values, { wbRd: memwb.rd, wbValue: value, wbWrites: writes });
+
+        // x0 is hard-wired to 0, so writes to it are ignored.
+        if (memwb.ctl.RegWrite && memwb.rd !== 0) {
+            state.regs[memwb.rd] = value;
+            state.changedReg = memwb.rd;
+            trace.events.push(`x${memwb.rd} ← ${value}`);
+        }
+
+        state.stats.retired++;
+    }
+
+
+
+
 });
