@@ -68,4 +68,37 @@
         );
     }
 
-});
+    /** MEM: load or store a word. Returns MEM/WB. */
+    function memoryAccess(state, exmem, trace) {
+        if (!exmem.valid) {
+            return BUBBLE;
+        }
+
+        trace.active[3] = true;
+        trace.instrs[3] = exmem.instr;
+
+        const { ctl, aluResult: address } = exmem;
+        let memData = 0;
+
+        if ((ctl.MemRead || ctl.MemWrite) && address & 3) {
+            throw new Error(
+                `Memory fault: address ${hex32(address)} is not word-aligned (it must be a multiple of 4).`
+            );
+        }
+
+        if (ctl.MemRead) {
+            memData = state.dataMemory[address] | 0;
+        }
+
+        if (ctl.MemWrite) {
+            state.dataMemory[address] = exmem.storeData;
+            state.changedAddress = address;
+            trace.events.push(`memory[${address}] ← ${exmem.storeData}`);
+        }
+
+        Object.assign(trace.values, {
+            memOp: ctl.MemRead ? "read" : ctl.MemWrite ? "write" : "none",
+            address,
+            memValue: ctl.MemRead ? memData : exmem.storeData,
+        });
+
