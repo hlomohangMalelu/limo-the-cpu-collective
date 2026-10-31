@@ -68,4 +68,20 @@
         );
     }
 
+
+     /** The ALU: ADD, SUB, SLL or SRL on 32-bit values. */
+    function alu(operation, a, b) {
+        switch (operation) {
+            case "ADD":
+                return (a + b) | 0;
+            case "SUB":
+                return (a - b) | 0;
+            case "SLL":
+                return (a << (b & 31)) | 0;
+            case "SRL":
+                return (a >>> (b & 31)) | 0;
+        }
+
+        throw new Error(`Unknown ALU operation ${operation}`);
+    }
 });
