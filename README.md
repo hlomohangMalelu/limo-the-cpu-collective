@@ -19,3 +19,23 @@ docs/DESIGN.md            ISA, architecture, pipeline-register model, wireframes
 ```
 
 
+
+
+
+git add src/service/SubmissionService.h
+git commit -m "submission: add SubmissionService interface"
+
+git add src/service/SubmissionService.cpp
+git commit -m "submission: implement submission and extension handling"
+
+git add src/service/AuthService.h
+git commit -m "auth: add AuthService interface"
+
+git add src/service/AuthService.cpp
+git commit -m "auth: implement login and password changes"
+
+git add src/service/AdminService.h
+git commit -m "admin: add AdminService interface"
+
+git add src/service/AdminService.cpp
+git commit -m "admin: implement user and course administration"
