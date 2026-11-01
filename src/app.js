@@ -435,6 +435,27 @@
         return lastAssembly.ok && lastAssembly.words.length > 0;
     }
 
+
+    // Add the narration of one cycle to the console (one block per cycle)
+    function narrateCycle(trace) {
+        const block = document.createElement("div");
+
+        block.className = "cyc";
+        block.dataset.cycle = machine.cycle;
+
+        const lines = narrate(trace).map(
+            ({ stage, text }) => `<div><span class="st">${stage}</span>${escapeHtml(text)}</div>`
+        );
+
+        if (trace.events.length) {
+            lines.push(`<div class="evt"><span class="st">⇒</span>${escapeHtml(trace.events.join("; "))}</div>`);
+        }
+
+        block.innerHTML = `<b>Cycle ${machine.cycle}</b>${lines.join("")}`;
+        $("narration").append(block);
+        $("narration").scrollTop = $("narration").scrollHeight;
+    }
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
