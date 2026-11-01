@@ -271,4 +271,54 @@
         };
     }
 
+
+    
+    //----------One clock cycle---------------
+    /**
+     * Advance the processor by one clock cycle. Changes `state` and returns
+     * the trace of the cycle: active[i] / instrs[i] say whether stage i
+     * (IF, ID, EX, MEM, WB) held an instruction and which one, values holds
+     * the numbers each unit worked on, and events lists what changed. 
+     * May throw (a misaligned access), Callers that want to recover should keep a copy of the state first.
+     */
+    function clock(state) {
+        const trace = {
+            active: [false, false, false, false, false],
+            instrs: [null, null, null, null, null],
+            events: [],
+            values: {}, // the numbers on the wires this cycle, for the datapath view and the narration
+        };
+
+        const { ifid, idex, exmem, memwb } = state; // the OLD registers
+
+        state.changedReg = -1;
+        state.changedAddress = -1;
+
+        // Oldest stage first: WB writes the register file before ID reads it.
+        writeBack(state, memwb, trace);
+        const nextMemwb = memoryAccess(state, exmem, trace);
+        const nextExmem = execute(idex, trace);
+        const nextIdex = decodeStage(state, ifid, trace);
+        const nextIfid = fetch(state, trace);
+
+        // PCSrc: a taken branch (resolved in EX) replaces the PC. In M3 the
+        // two instructions already fetched behind it are not flushed.
+        if (nextExmem.valid && nextExmem.branchTaken) {
+            state.pc = nextExmem.branchTarget;
+            trace.events.push(`branch taken → PC = ${hex32(state.pc)}`);
+        }
+
+        // The clock edge: all four registers change together.
+        state.memwb = nextMemwb;
+        state.exmem = nextExmem;
+        state.idex = nextIdex;
+        state.ifid = nextIfid;
+        state.cycle++;
+        state.trace = trace;
+
+        return trace;
+    }
+
+    
+
 });
