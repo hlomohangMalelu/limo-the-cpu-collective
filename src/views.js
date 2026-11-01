@@ -191,3 +191,82 @@
             .map(([label, value]) => `<dt>${label}</dt><dd>${value}</dd>`)
             .join("");
     }
+
+ // Datapath: every unit of the block diagram, active ones outlined
+    // ------------------------------------------------------------------
+
+    /** A bar for a pipeline register, as in the block diagram. */
+    const bar = (name) => `<div class="pbar" title="${name} pipeline register"><span>${name}</span></div>`;
+
+    /** One unit. `lines` are its live values; it is drawn only as active when `active`. */
+    function unit(name, active, lines = [], { later = "" } = {}) {
+        const body = lines.length
+            ? lines.map((line) => `<div class="uval">${escapeHtml(line)}</div>`).join("")
+            : "";
+
+        return `
+            <div class="unit ${active ? "active" : ""} ${later ? "later" : ""}">
+                <b>${escapeHtml(name)}${active ? " (active)" : ""}</b>
+                ${body}
+                ${later ? `<div class="uval">${later}</div>` : ""}
+            </div>
+        `;
+    }
+
+    function renderDatapath(state, decimal) {
+        const trace = state.trace;
+        const a = trace ? trace.active : [false, false, false, false, false];
+        const v = trace ? trace.values : {};
+        const num = (x) => (decimal ? x | 0 : hex32(x));
+        const instr = (i) => (a[i] ? textOf(trace.instrs[i]) : "");
+        const ex = a[2] ? disassemble(trace.instrs[2]) : {};
+
+        const idUses2 = ["R", "S", "B"].includes(v.syntax);
+        const activeSignals = v.ctl
+            ? Object.entries(v.ctl).filter(([, value]) => value && value !== "-").map(([k, value]) => (value === 1 ? k : `${k}=${value}`))
+            : [];
+
+        const stage = (name, units) => `<div class="stage s-${name.toLowerCase()}"><h3>${name}</h3>${units.join("")}</div>`;
+
+        $("datapath").innerHTML = `
+            <div class="dp">
+                ${stage("IF", [
+                    unit("PC", a[0], a[0] ? [`pc ${hex32(v.pc)}`, `PC + 4 = ${hex32(v.pcPlus4)}`] : [`pc ${hex32(state.pc)}`]),
+                    unit("Instr. memory", a[0], a[0] ? [instr(0)] : []),
+                ])}
+                ${bar("IF/ID")}
+                ${stage("ID", [
+                    unit("Register file", a[1] || !!v.wbWrites,
+                        [
+                            ...(a[1] ? [`rs1 x${v.rs1} = ${num(v.rs1Val)}`] : []),
+                            ...(a[1] && idUses2 ? [`rs2 x${v.rs2} = ${num(v.rs2Val)}`] : []),
+                            ...(v.wbWrites ? [`write x${v.wbRd} ← ${num(v.wbValue)}`] : []),
+                        ]),
+                    unit("Control", a[1], a[1] ? [activeSignals.join(" ") || "no signals"] : []),
+                    unit("Immediate", a[1] && v.syntax !== "R", a[1] && v.syntax !== "R" ? [`imm ${v.imm}`] : []),
+                ])}
+                ${bar("ID/EX")}
+                ${stage("EX", [
+                    unit("Fwd muxes", false, [], { later: "M4" }),
+                    unit("ALU", a[2], a[2] ? [`${v.aluOp}: ${num(v.aluA)}, ${num(v.aluB)}`, `result ${num(v.aluResult)}`] : []),
+                    unit("Branch", a[2] && ex.syntax === "B",
+                        a[2] && ex.syntax === "B" ? [v.branchTaken ? `taken → ${hex32(v.branchTarget)}` : "not taken"] : []),
+                ])}
+                ${bar("EX/MEM")}
+                ${stage("MEM", [
+                    unit("Data mem", a[3] && v.memOp !== "none",
+                        a[3] && v.memOp !== "none" ? [`${v.memOp} [${v.address}]`, `value ${num(v.memValue)}`] : []),
+                    unit("Hazard unit", false, [], { later: "M4: stall · flush" }),
+                ])}
+                ${bar("MEM/WB")}
+                ${stage("WB", [
+                    unit("WB mux", a[4] && !!v.wbWrites, a[4] && v.wbWrites ? [`x${v.wbRd} ← ${num(v.wbValue)}`] : []),
+                ])}
+            </div>
+            <p class="dpnote">${trace ? `Cycle ${state.cycle}: ${a.filter(Boolean).length} of 5 stages busy.` : "Press Step to run the first clock cycle."}</p>
+        `;
+    }
+
+
+
+});
