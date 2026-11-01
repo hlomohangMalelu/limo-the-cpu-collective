@@ -467,6 +467,49 @@
     }
 
 
+    // Run one clock cycle. Returns false when nothing more can run
+    function stepOnce() {
+        if (!ensureAssembled()) {
+            message("There is no assembled program to run. Fix the errors first.", "err");
+            narrationNote("There is no assembled program to run. Fix the errors in the Editor first.", "stop");
+            return false;
+        }
+
+        if (isFinished(machine)) {
+            $("status").textContent = `Program complete after ${machine.cycle} cycles.`;
+            return false;
+        }
+
+        const before = structuredClone(machine); // to recover from a fault
+
+        try {
+            const trace = clock(machine);
+
+            history.push(before);
+            narrateCycle(trace);
+        } catch (error) {
+            machine = before;
+            message(error.message, "err");
+            narrationNote(error.message, "stop");
+            renderMachine();
+            return false;
+        }
+
+        renderMachine();
+
+        if (isFinished(machine)) {
+            $("status").textContent = `Program complete after ${machine.cycle} cycles.`;
+            message(`Program complete after ${machine.cycle} cycles.`, "okmsg");
+            narrationNote(`Program complete after ${machine.cycle} cycles.`, "done");
+            return false;
+        }
+
+        $("status").textContent = `Cycle ${machine.cycle}`;
+
+        return true;
+    }
+
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
