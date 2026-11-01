@@ -25,6 +25,33 @@ phetho:
         kopanya_h  x9, x0, 7
 `,
 
+        "hazard-free": `# M3: a hazard-free program. The pipeline has no forwarding, stalls or flushes yet,
+# so every result is used 3+ instructions after it is produced, and the two
+# instructions after a taken branch are nops (they still run: no flush yet).
+# "kopanya x0, x0, x0" is the nop. Result: x5=10 x6=25 x7=35 x8=35 x9=25 x11=7, memory[0]=35
+
+kopanya_h x5, x0, 10
+kopanya_h x6, x0, 25
+kopanya   x0, x0, x0
+kopanya   x0, x0, x0
+kopanya   x7, x5, x6     # x7 = 35
+kopanya   x0, x0, x0
+kopanya   x0, x0, x0
+beha      x7, 0(x0)      # memory[0] = 35
+nka       x8, 0(x0)      # x8 = memory[0]
+kopanya   x0, x0, x0
+kopanya   x0, x0, x0
+tlosa     x9, x8, x5     # x9 = 35 - 10 = 25
+kopanya   x0, x0, x0
+kopanya   x0, x0, x0
+lekana    x9, x6, phetho   # 25 == 25, taken
+kopanya   x0, x0, x0     # still runs 
+kopanya   x0, x0, x0     # still runs 
+kopanya_h x10, x0, 99    
+phetho:   
+	kopanya_h x11, x0, 7
+`,
+
         memory: `kopanya_h x5, x0, 10
 kopanya_h x6, x0, 25
 kopanya   x7, x5, x6     # x7 = 35
