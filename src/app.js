@@ -549,9 +549,85 @@
         }, Math.max(10, +$("delay").value || 300));
     }
 
+/** Step Back: restore the state from before the last clock cycle. */
+    function stepBack() {
+        stopRunning();
 
+        const previous = history.back();
 
+        if (!previous) {
+            $("status").textContent = "Already at cycle 0: nothing to step back to.";
+            return;
+        }
 
+        machine = previous;
+
+        // Remove the narration of the cycle that was undone, and any notes after it.
+        const last = [...$("narration").querySelectorAll(".cyc")].pop();
+
+        if (last) {
+            while (last.nextElementSibling) {
+                last.nextElementSibling.remove();
+            }
+
+            last.remove();
+        }
+
+        $("status").textContent = `Stepped back to cycle ${machine.cycle}`;
+        renderMachine();
+    }
+
+    function resetProcessor() {
+        stopRunning();
+
+        if ($("src").value !== lastSource) {
+            clearTimeout(timer);
+            run();
+            return;
+        }
+
+        machine = createState(lastAssembly.ok ? lastAssembly.words : []);
+        history.clear();
+        renderMachine();
+        $("output").innerHTML = "";
+        $("narration").innerHTML = "";
+        message("Processor reset: registers, memory and pipeline cleared.", "okmsg");
+        narrationNote("Processor reset: registers, memory and pipeline cleared. Press Step or Run.", "done");
+        $("status").textContent = "Processor reset";
+    }
+
+    $("tabEditor").onclick = () => showView("editor");
+    $("tabProc").onclick = () => showView("processor");
+    $("subDatapath").onclick = () => showSub("datapath");
+    $("subControl").onclick = () => showSub("control");
+    $("subPipe").onclick = () => showSub("pipe");
+    $("assemble2").onclick = run;
+    $("back").onclick = stepBack;
+
+    // A breakpoint checkbox in instruction memory (one listener for the whole table).
+    $("imemTable").addEventListener("change", (event) => {
+        const box = event.target.closest(".bp");
+
+        if (!box) {
+            return;
+        }
+
+        const address = +box.dataset.address;
+
+        if (box.checked) {
+            breakpoints.add(address);
+        } else {
+            breakpoints.delete(address);
+        }
+
+        renderMachine();
+    });
+    $("step").onclick = () => {
+        stopRunning();
+        stepOnce();
+    };
+    $("runBtn").onclick = toggleRun;
+    $("reset").onclick = resetProcessor;
 
 
     // Load the default example.
