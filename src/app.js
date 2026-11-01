@@ -13,6 +13,12 @@
         splitFields,
         hex32,
         EXAMPLES,
+        createState,
+        createHistory,
+        narrate,
+        clock,
+        isFinished,
+        renderProcessor,
     } = window.LIMO;
 
     const $ = (id) => document.getElementById(id);
@@ -547,7 +553,7 @@
 
 
 
-    
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
