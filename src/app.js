@@ -425,6 +425,16 @@
         });
     }
 
+    // Assemble first if the source changed since the last assembly
+    function ensureAssembled() {
+        if ($("src").value !== lastSource) {
+            clearTimeout(timer);
+            run();
+        }
+
+        return lastAssembly.ok && lastAssembly.words.length > 0;
+    }
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
