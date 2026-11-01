@@ -2,18 +2,7 @@
 
 ### A Sesotho-Language Processor and Interactive Computer Architecture Project
 
-<p align="center">
-  <a href="https://hlomohangmalelu.github.io/limo-the-cpu-collective/">
-    **Launch LIMO Application**
-  </a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Language-JavaScript-yellow" alt="JavaScript">
-  <img src="https://img.shields.io/badge/Architecture-RISC--V%20Derived-blue" alt="RISC-V Derived">
-  <img src="https://img.shields.io/badge/Platform-Web-green" alt="Web Application">
-  <img src="https://img.shields.io/badge/License-MIT-orange" alt="MIT License">
-</p>
+>>Live site:https://hlomohangmalelu.github.io/limo-the-cpu-collective/
 
 ## Overview
 
