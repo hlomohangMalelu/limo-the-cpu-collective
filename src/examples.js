@@ -14,10 +14,12 @@
         kopanya_h  x5, x0, 0x0F
         ritsisa_ht x6, x5, 2     # x6 = x5 << 2
         ritsisa_hl x7, x6, 1     # x7 = x6 >> 1
-        lekana     x5, x6, skip  # 15 != 60, not taken
-        fapana     x5, x6, done  # 15 != 60, taken
-skip:   kopanya_h  x8, x0, 99    # skipped
-done:   kopanya_h  x9, x0, 7
+        lekana     x5, x6, tlola  # 15 != 60, not taken
+        fapana     x5, x6, phetho # 15 != 60, taken
+        tlola:      
+        kopanya_h  x8, x0, 99    # skipped
+        phetho:   
+        kopanya_h  x9, x0, 7
 `,
 
         memory: `# Store a value, load it back, and use it straight away.
@@ -33,7 +35,8 @@ done:   kopanya_h  x9, x0, 7
         sum: `# Sum of 1..5 with a loop. Result (15) ends in x5 and at address 0.
         kopanya_h x5, x0, 0      # sum = 0
         kopanya_h x6, x0, 5      # counter = 5
-loop:   kopanya   x5, x5, x6     # sum = sum + counter
+        belika:   
+        kopanya   x5, x5, x6     # sum = sum + counter
         kopanya_h x6, x6, -1     # counter = counter - 1
         fapana    x6, x0, loop   # repeat while counter != 0
         beha      x5, 0(x0)      # store the result
