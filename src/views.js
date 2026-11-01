@@ -268,5 +268,95 @@
     }
 
 
+     // Control: the signals the control unit made, and the ones in flight
+    // ------------------------------------------------------------------
 
+    const SIGNALS = ["RegWrite", "ALUSrc", "ALUctl", "MemRead", "MemWrite", "MemtoReg", "Branch"];
+
+    // One line of meaning per control signal (handout B4), plus PCSrc, which is
+    // not made in ID: it is decided in EX from Branch and the ALU result.
+    const SIGNAL_MEANING = {
+        RegWrite: "1: write the result into the destination register in WB.",
+        ALUSrc: "0: the ALU's second input is register rs2. 1: it is the immediate.",
+        ALUctl: "Which operation the ALU performs: ADD, SUB, SLL or SRL.",
+        MemRead: "1: read a word from data memory in MEM (a load).",
+        MemWrite: "1: write rs2 to data memory in MEM (a store).",
+        MemtoReg: "0: write the ALU result back. 1: write the word read from memory.",
+        Branch: "1: this is a conditional branch; EX compares rs1 and rs2.",
+        PCSrc: "1: take the branch, so the PC becomes the branch target. 0: the PC goes to PC + 4. Decided in EX.",
+    };
+
+    function renderControl(state) {
+        const trace = state.trace;
+        const row = (label, text, ctl) => `
+            <tr class="${text ? "" : "bubble"}">
+                <td><b>${label}</b></td>
+                <td>${escapeHtml(text || "bubble")}</td>
+                ${SIGNALS.map((name) => `<td>${ctl && name in ctl ? ctl[name] : "–"}</td>`).join("")}
+            </tr>
+        `;
+        const reg = (register) => (register.valid ? register : null);
+        const idex = reg(state.idex);
+        const exmem = reg(state.exmem);
+        const memwb = reg(state.memwb);
+        const idActive = trace && trace.active[1];
+        const exActive = trace && trace.active[2];
+        const heading = (name) => `<th title="${escapeHtml(SIGNAL_MEANING[name])}">${name}</th>`;
+        const isBranch = exActive && disassemble(trace.instrs[2]).syntax === "B";
+
+        $("controlView").innerHTML = `
+            <table>
+                <caption>Made by the control unit in ID this cycle</caption>
+                <thead><tr><th>Stage</th><th>Instruction</th>${SIGNALS.map(heading).join("")}</tr></thead>
+                <tbody>${row("ID", idActive ? textOf(trace.instrs[1]) : "", idActive ? trace.values.ctl : null)}</tbody>
+            </table>
+            <table>
+                <caption>Travelling with the instructions (the signals each pipeline register holds)</caption>
+                <thead><tr><th>Register</th><th>Instruction</th>${SIGNALS.map(heading).join("")}</tr></thead>
+                <tbody>
+                    ${row("ID/EX", idex && textOf(idex.instr), idex && idex.ctl)}
+                    ${row("EX/MEM", exmem && textOf(exmem.instr), exmem && exmem.ctl)}
+                    ${row("MEM/WB", memwb && textOf(memwb.instr), memwb && memwb.ctl)}
+                </tbody>
+            </table>
+            <table>
+                <caption>PCSrc, decided in EX this cycle</caption>
+                <thead><tr><th>Stage</th><th>Instruction</th><th title="${escapeHtml(SIGNAL_MEANING.PCSrc)}">PCSrc</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr class="${exActive ? "" : "bubble"}">
+                        <td><b>EX</b></td>
+                        <td>${exActive ? escapeHtml(textOf(trace.instrs[2])) : "bubble"}</td>
+                        <td>${exActive ? +!!trace.values.branchTaken : "–"}</td>
+                        <td>${!exActive ? "" : !isBranch ? "not a branch" : trace.values.branchTaken ? `taken: PC ← ${hex32(trace.values.branchTarget)}` : "not taken: PC + 4"}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table>
+                <caption>What each signal means</caption>
+                <thead><tr><th>Signal</th><th>Meaning</th></tr></thead>
+                <tbody>${[...SIGNALS, "PCSrc"].map((name) => `<tr><td><b>${name}</b></td><td class="mean">${escapeHtml(SIGNAL_MEANING[name])}</td></tr>`).join("")}</tbody>
+            </table>
+            <p class="dpnote">Each stage drops the signals it has finished with, so the later registers hold fewer. Hover a signal name for its meaning.</p>
+        `;
+    }
+
+    function renderProcessor(state, { decimal = false, breakpoints = new Set() } = {}) {
+        renderDatapath(state, decimal);
+        renderControl(state);
+        renderStages(state);
+        renderPipelineRegisters(state, decimal);
+        renderInstructionMemory(state, breakpoints);
+        renderDataMemory(state, decimal);
+        renderInfo(state);
+
+        $("bpChip").textContent = breakpoints.size
+            ? `${breakpoints.size} breakpoint${breakpoints.size === 1 ? "" : "s"}`
+            : "no breakpoints";
+    }
+
+    return { renderProcessor, SIGNAL_MEANING };
+    
 });
+
+
+
