@@ -1,8 +1,4 @@
-/*
- * Page wiring for the assembler view.
- * All assembling is done by src/assembler.js; this file only draws.
- */
-
+// Page wiring for the assembler view
 (function () {
     const {
         assemble,
@@ -345,7 +341,7 @@
         $("regTable2").innerHTML = gprRows + pcRow;
     }
 
-    // Draw the registers and the whole processor view
+    // Draw the registers and the whole processor view.
     function renderMachine() {
         renderRegs(machine.regs, machine.changedReg);
 
@@ -574,7 +570,6 @@
         }, Math.max(10, +$("delay").value || 300));
     }
 
-
     // Step Back: restore the state from before the last clock cycle.
     function stepBack() {
         stopRunning();
@@ -652,12 +647,6 @@
         stopRunning();
         stepOnce();
     };
-
-    document.querySelectorAll(".runBtn").forEach((btn) => {
-        btn.onclick = toggleRun;
-    });
-   
-    $("reset").onclick = resetProcessor;
 
     // Load the default example: M3 has no hazard units, so it must be hazard-free.
     load(EXAMPLES["hazard-free"]);
