@@ -319,6 +319,73 @@
         return trace;
     }
 
-    
+    /**
+     * Which stage each instruction is in after the last clock edge:
+     * { address: "IF" | "ID" | "EX" | "MEM" | "WB" }. The PC points at the
+     * instruction that will be fetched next, so that one is "IF".
+     */
+    function stagesByAddress(state) {
+        const stages = {};
+
+        if (state.pc >> 2 < state.instructionMemory.length) {
+            stages[state.pc] = "IF";
+        }
+
+        [
+            [state.ifid, "ID"],
+            [state.idex, "EX"],
+            [state.exmem, "MEM"],
+            [state.memwb, "WB"],
+        ].forEach(([register, name]) => {
+            if (register.valid) {
+                stages[register.pc] = name;
+            }
+        });
+
+        return stages;
+    }
+
+    // ------------------------------------------------------------------
+    // Step Back
+    // ------------------------------------------------------------------
+
+    /**
+     * A stack of earlier states, so Step Back can restore the previous copy
+     * (docs/DESIGN.md section 3). push(state) is called BEFORE each clock;
+     * back() returns the state from before the last clock, or null.
+     */
+    function createHistory(limit = 5000) {
+        const stack = [];
+
+        return {
+            push(state) {
+                stack.push(structuredClone(state));
+
+                if (stack.length > limit) {
+                    stack.shift();
+                }
+            },
+            back() {
+                return stack.length ? stack.pop() : null;
+            },
+            clear() {
+                stack.length = 0;
+            },
+            get size() {
+                return stack.length;
+            },
+        };
+    }
+
+    return {
+        createHistory,
+        BUBBLE,
+        STAGE_NAMES,
+        createState,
+        isFinished,
+        alu,
+        clock,
+        stagesByAddress,
+    };
 
 });
