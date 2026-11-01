@@ -389,6 +389,27 @@
         }
     });
 
+    //->M3
+    //------------------------------------------------------------------
+    // Processor controls: Step, Run / Pause, Reset
+    // ------------------------------------------------------------------
+
+    function showView(name) {
+        const processor = name === "processor";
+
+        $("viewEditor").hidden = processor;
+        $("viewProc").hidden = !processor;
+        $("toolsEditor").hidden = processor;
+        $("toolsProc").hidden = !processor;
+        $("msgPane").hidden = processor;
+        $("narrPane").hidden = !processor;
+
+        $("tabEditor").classList.toggle("on", !processor);
+        $("tabProc").classList.toggle("on", processor);
+        $("tabEditor").setAttribute("aria-pressed", String(!processor));
+        $("tabProc").setAttribute("aria-pressed", String(processor));
+    }
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
