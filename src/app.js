@@ -33,13 +33,19 @@
 
     let mode = "hex";
 
-    // Register file contents. No program runs in M2, so every register
-    // holds 0; the pipeline (M3) will pass its real register values and
-    // the index it just wrote to renderRegs().
-    const regs = Array(16).fill(0);
+    // The processor: registers, memories and pipeline registers all live in
+    // this one state object (see src/pipeline.js). It is rebuilt whenever the
+    // source assembles, and by Reset.
+    let machine = createState();
 
-    // Program counter (sebaka). It stays 0 until the pipeline exists in M3.
-    let pc = 0;
+    // The source text that was last assembled, and the timer of Run.
+    let lastSource = null;
+    let lastAssembly = { ok: false, words: [] };
+    let runTimer = null;
+
+    // Step Back: earlier copies of the state. Breakpoints: addresses where Run pauses.
+    const history = createHistory();
+    const breakpoints = new Set();
 
     let timer = null;
 
@@ -200,6 +206,19 @@
 
         renderCode(result);
 
+        lastSource = $("src").value;
+        lastAssembly = result;
+        stopRunning();
+        machine = createState(result.ok ? result.words : []);
+        history.clear();
+        $("narration").innerHTML = "";
+        [...breakpoints].forEach((address) => {
+            if (address >> 2 >= machine.instructionMemory.length) {
+                breakpoints.delete(address);
+            }
+        });
+        renderMachine();
+
         if (result.ok) {
             const n = result.words.length;
 
@@ -318,16 +337,29 @@
             <tr class="pcrow">
                 <td>PC</td>
                 <td>sebaka</td>
-                <td>${decimal ? pc : hex32(pc)}</td>
+                <td>${decimal ? machine.pc : hex32(machine.pc)}</td>
             </tr>
         `;
 
         $("regTable").innerHTML = gprRows + pcRow;
+        $("regTable2").innerHTML = gprRows + pcRow;
     }
 
-    $("regFormat").onchange = () => renderRegs(regs);
+    // Draw the registers and the whole processor view
+    function renderMachine() {
+        renderRegs(machine.regs, machine.changedReg);
 
-    renderRegs(regs);
+        renderProcessor(machine, {
+            decimal: $("regFormat").value === "dec",
+            breakpoints,
+        });
+
+        $("back").disabled = history.size === 0;
+    }
+
+    $("regFormat").onchange = renderMachine;
+
+    renderMachine();
 
     // ------------------------------------------------------------------
     // UI event wiring
@@ -395,8 +427,7 @@
         }
     });
 
-    //->M3
-    //------------------------------------------------------------------
+    // ------------------------------------------------------------------
     // Processor controls: Step, Run / Pause, Reset
     // ------------------------------------------------------------------
 
@@ -415,7 +446,6 @@
         $("tabEditor").setAttribute("aria-pressed", String(!processor));
         $("tabProc").setAttribute("aria-pressed", String(processor));
     }
-
 
     // The Datapath, Control and Pipeline registers tabs of the Processor view
     function showSub(name) {
@@ -441,7 +471,6 @@
         return lastAssembly.ok && lastAssembly.words.length > 0;
     }
 
-
     // Add the narration of one cycle to the console (one block per cycle)
     function narrateCycle(trace) {
         const block = document.createElement("div");
@@ -462,7 +491,6 @@
         $("narration").scrollTop = $("narration").scrollHeight;
     }
 
-
     function narrationNote(text, className) {
         const row = document.createElement("div");
 
@@ -471,7 +499,6 @@
         $("narration").append(row);
         $("narration").scrollTop = $("narration").scrollHeight;
     }
-
 
     // Run one clock cycle. Returns false when nothing more can run
     function stepOnce() {
@@ -515,13 +542,11 @@
         return true;
     }
 
-
     function stopRunning() {
         clearInterval(runTimer);
         runTimer = null;
-        $("runBtn").textContent = "▶ Run";
+        document.querySelector(".runBtn").textContent = "Run";
     }
-
 
     function toggleRun() {
         if (runTimer) {
@@ -529,7 +554,7 @@
             return;
         }
 
-        $("runBtn").textContent = "⏸ Pause";
+        document.querySelector(".runBtn").textContent = "Pause";
 
         let first = true; // Run always moves at least one cycle, so it can leave a breakpoint
 
@@ -549,7 +574,8 @@
         }, Math.max(10, +$("delay").value || 300));
     }
 
-/** Step Back: restore the state from before the last clock cycle. */
+
+    // Step Back: restore the state from before the last clock cycle.
     function stepBack() {
         stopRunning();
 
@@ -626,10 +652,13 @@
         stopRunning();
         stepOnce();
     };
-    $("runBtn").onclick = toggleRun;
+
+    document.querySelectorAll(".runBtn").forEach((btn) => {
+        btn.onclick = toggleRun;
+    });
+   
     $("reset").onclick = resetProcessor;
 
-
-    // Load the default example.
-    load(EXAMPLES.sum);
+    // Load the default example: M3 has no hazard units, so it must be hazard-free.
+    load(EXAMPLES["hazard-free"]);
 })();
