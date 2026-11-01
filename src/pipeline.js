@@ -159,4 +159,44 @@
         };
     }
 
+
+    
+    /** ID: decode, generate control signals, read the registers. Returns ID/EX. */
+    function decodeStage(state, ifid, trace) {
+        if (!ifid.valid) {
+            return BUBBLE;
+        }
+
+        trace.active[1] = true;
+        trace.instrs[1] = ifid.instr;
+
+        const decoded = disassemble(ifid.instr);
+        const ctl = controlUnit(decoded);
+
+        Object.assign(trace.values, {
+            mnemonic: decoded.mnemonic,
+            syntax: decoded.syntax,
+            rs1: decoded.rs1,
+            rs2: decoded.rs2,
+            rd: decoded.rd,
+            rs1Val: state.regs[decoded.rs1],
+            rs2Val: state.regs[decoded.rs2],
+            imm: decoded.imm,
+            ctl,
+        });
+
+        return {
+            valid: true,
+            pc: ifid.pc,
+            instr: ifid.instr,
+            rs1: decoded.rs1,
+            rs2: decoded.rs2,
+            rd: decoded.rd,
+            rs1Val: state.regs[decoded.rs1],
+            rs2Val: state.regs[decoded.rs2],
+            imm: decoded.imm,
+            funct3: decoded.funct3,
+            ctl,
+        };
+    }
 });
