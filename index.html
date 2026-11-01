@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LIMO</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="styles/style.css">
+<link rel="stylesheet" href="styles/m3.css">
 </head>
 <body>
-<header class="toolbar">
+<header class="toolbar" id="toolsEditor">
   <button id="assemble" title="Assemble (Ctrl+Enter)"> Assemble</button>
   <button id="open" title="Open a .limo file">Open .limo</button>
   <input id="file" type="file" accept=".limo" hidden>
-  <label class="grow-0">Example
+  <label class="grow-0">Mohlala
     <select id="example" aria-label="Load an example program"><option value="">Choose…</option></select>
   </label>
+  <button class = "runBtn" id="runBtn" title="Run / Pause. Pauses before an instruction that has a breakpoint.">Run</button>
   <span class="sep"></span>
   <span class="modes" role="radiogroup" aria-label="Machine code display">
     <label><input type="radio" name="mode" value="hex" checked> Hex</label>
@@ -22,7 +24,24 @@
   <h1>LIMO</h1>
 </header>
 
-<main class="panes">
+<header class="toolbar" id="toolsProc" hidden>
+  <button id="assemble2" title="Assemble and reset the processor (Ctrl+Enter)"> Assemble</button>
+  <button id="reset" title="Reset the processor">Reset</button>
+  <button id="back" title="Step back one clock cycle">Back</button>
+  <button id="step" title="Run one clock cycle">Step</button>
+  <button class = "runBtn" id="runBtn" title="Run / Pause. Pauses before an instruction that has a breakpoint.">Run</button>
+  <label class="grow-0">Delay <input id="delay" type="number" min="10" step="10" value="300" aria-label="Delay per cycle in milliseconds"> ms</label>
+  <h1>LIMO</h1>
+</header>
+
+<div class="shell">
+<nav class="sidebar" aria-label="View">
+  <button id="tabEditor" class="on" aria-pressed="true">Editor</button>
+  <button id="tabProc" aria-pressed="false">Processor</button>
+</nav>
+
+<div class="content">
+<main class="panes" id="viewEditor">
   <section class="pane" aria-labelledby="hSource">
     <div class="heading"><b id="hSource">Source code</b><span id="asmStatus" class="status-chip">Ready</span></div>
     <div class="editor"><pre id="lines" aria-hidden="true">1</pre><textarea id="src" spellcheck="false" aria-label="LIMO source code"></textarea></div>
@@ -49,16 +68,68 @@
   </div>
 </main>
 
-<section class="pane console" aria-labelledby="hMsg">
-  <div class="heading"><b id="hMsg">Messages</b></div>
+<main class="panes proc" id="viewProc" hidden>
+  <section class="pane" aria-labelledby="hPipe">
+    <div class="heading"><b id="hPipe">5-stage LIMO processor</b>
+      <span class="tabs" role="group" aria-label="Processor diagram">
+        <button id="subDatapath" class="on" aria-pressed="true">Datapath</button>
+        <button id="subControl" aria-pressed="false">Control</button>
+        <button id="subPipe" aria-pressed="false">Pipeline registers</button>
+      </span>
+    </div>
+    <div class="scroll" id="datapath"></div>
+    <div class="scroll" id="controlView" hidden></div>
+    <div class="scroll" id="pipeView" hidden>
+      <table><thead><tr><th>Stage</th><th>Instruction this cycle</th></tr></thead><tbody id="stageTable"></tbody></table>
+      <div id="pipeRegs" class="piperegs"></div>
+    </div>
+    <footer><span>Active units are outlined and labelled “(active)”. Forwarding and the hazard unit arrive in M4, so programs must be hazard-free.</span></footer>
+  </section>
+
+  <div class="rcol">
+    <section class="pane" aria-labelledby="hReg2">
+      <div class="heading"><b id="hReg2">Registers</b><span class="status-chip">format: see GPR</span></div>
+      <div class="scroll"><table><thead><tr><th>Name</th><th>Alias · Sesotho</th><th>Value</th></tr></thead><tbody id="regTable2"></tbody></table></div>
+    </section>
+    <section class="pane" aria-labelledby="hInfo">
+      <div class="heading"><b id="hInfo">Execution info</b></div>
+      <dl id="info" class="info"></dl>
+    </section>
+  </div>
+
+  <div class="rcol">
+    <section class="pane" aria-labelledby="hImem">
+      <div class="heading"><b id="hImem">Instruction memory</b><span class="status-chip" id="bpChip">no breakpoints</span></div>
+      <div class="scroll"><table><thead><tr><th title="Breakpoint: Run pauses before this instruction is fetched">BP</th><th>Addr</th><th>Stage</th><th>Instruction</th></tr></thead><tbody id="imemTable"></tbody></table></div>
+    </section>
+    <section class="pane" aria-labelledby="hDmem">
+      <div class="heading"><b id="hDmem">Data memory</b></div>
+      <div class="scroll"><table><thead><tr><th>Addr</th><th>Value</th><th>Unwritten</th></tr></thead><tbody id="dmemTable"></tbody></table></div>
+    </section>
+  </div>
+</main>
+
+<section class="pane console" id="msgPane" aria-labelledby="hMsg">
+  <div class="heading"><b id="hMsg">Melaetsa</b></div>
   <div id="output" role="log" aria-live="polite"></div>
 </section>
+
+<section class="pane console" id="narrPane" aria-labelledby="hNarr" hidden>
+  <div class="heading"><b id="hNarr">Manollo</b></div>
+  <div id="narration" role="log" aria-live="polite"></div>
+</section>
+</div>
+</div>
 
 <footer class="status"><span id="status">Ready</span><span>LIMO · 32-bit load-store ISA · 16 registers · 14-bit immediates</span></footer>
 
 <script src="src/isa.js"></script>
 <script src="src/assembler.js"></script>
 <script src="src/examples.js"></script>
+<script src="src/control.js"></script>
+<script src="src/pipeline.js"></script>
+<script src="src/narrate.js"></script>
+<script src="src/views.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>
