@@ -456,6 +456,17 @@
         $("narration").scrollTop = $("narration").scrollHeight;
     }
 
+
+    function narrationNote(text, className) {
+        const row = document.createElement("div");
+
+        row.className = className;
+        row.textContent = text;
+        $("narration").append(row);
+        $("narration").scrollTop = $("narration").scrollHeight;
+    }
+
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
