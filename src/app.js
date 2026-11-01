@@ -410,6 +410,21 @@
         $("tabProc").setAttribute("aria-pressed", String(processor));
     }
 
+
+    // The Datapath, Control and Pipeline registers tabs of the Processor view
+    function showSub(name) {
+        [
+            ["datapath", "datapath", "subDatapath"],
+            ["control", "controlView", "subControl"], 
+            ["pipe", "pipeView", "subPipe"]
+
+        ].forEach(([key, id, button]) => {
+            $(id).hidden = key !== name;
+            $(button).classList.toggle("on", key === name);
+            $(button).setAttribute("aria-pressed", String(key === name));
+        });
+    }
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
