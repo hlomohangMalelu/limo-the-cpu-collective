@@ -1,0 +1,10 @@
+{
+    "name": "limo-the-cpu-collective",
+    "version": "0.3.0",
+    "description": "LIMO: a Sesotho-language RISC-V derived ISA and its pipeline simulator",
+    "scripts": {
+        "test": "node --test tests/*.test.js",
+        "examples": "node scripts/sync-examples.js"
+    },
+    "license": "MIT"
+}
