@@ -13,6 +13,12 @@
         splitFields,
         hex32,
         EXAMPLES,
+        createState,
+        createHistory,
+        narrate,
+        clock,
+        isFinished,
+        renderProcessor,
     } = window.LIMO;
 
     const $ = (id) => document.getElementById(id);
@@ -388,6 +394,165 @@
             run();
         }
     });
+
+    //->M3
+    //------------------------------------------------------------------
+    // Processor controls: Step, Run / Pause, Reset
+    // ------------------------------------------------------------------
+
+    function showView(name) {
+        const processor = name === "processor";
+
+        $("viewEditor").hidden = processor;
+        $("viewProc").hidden = !processor;
+        $("toolsEditor").hidden = processor;
+        $("toolsProc").hidden = !processor;
+        $("msgPane").hidden = processor;
+        $("narrPane").hidden = !processor;
+
+        $("tabEditor").classList.toggle("on", !processor);
+        $("tabProc").classList.toggle("on", processor);
+        $("tabEditor").setAttribute("aria-pressed", String(!processor));
+        $("tabProc").setAttribute("aria-pressed", String(processor));
+    }
+
+
+    // The Datapath, Control and Pipeline registers tabs of the Processor view
+    function showSub(name) {
+        [
+            ["datapath", "datapath", "subDatapath"],
+            ["control", "controlView", "subControl"], 
+            ["pipe", "pipeView", "subPipe"]
+
+        ].forEach(([key, id, button]) => {
+            $(id).hidden = key !== name;
+            $(button).classList.toggle("on", key === name);
+            $(button).setAttribute("aria-pressed", String(key === name));
+        });
+    }
+
+    // Assemble first if the source changed since the last assembly
+    function ensureAssembled() {
+        if ($("src").value !== lastSource) {
+            clearTimeout(timer);
+            run();
+        }
+
+        return lastAssembly.ok && lastAssembly.words.length > 0;
+    }
+
+
+    // Add the narration of one cycle to the console (one block per cycle)
+    function narrateCycle(trace) {
+        const block = document.createElement("div");
+
+        block.className = "cyc";
+        block.dataset.cycle = machine.cycle;
+
+        const lines = narrate(trace).map(
+            ({ stage, text }) => `<div><span class="st">${stage}</span>${escapeHtml(text)}</div>`
+        );
+
+        if (trace.events.length) {
+            lines.push(`<div class="evt"><span class="st">⇒</span>${escapeHtml(trace.events.join("; "))}</div>`);
+        }
+
+        block.innerHTML = `<b>Cycle ${machine.cycle}</b>${lines.join("")}`;
+        $("narration").append(block);
+        $("narration").scrollTop = $("narration").scrollHeight;
+    }
+
+
+    function narrationNote(text, className) {
+        const row = document.createElement("div");
+
+        row.className = className;
+        row.textContent = text;
+        $("narration").append(row);
+        $("narration").scrollTop = $("narration").scrollHeight;
+    }
+
+
+    // Run one clock cycle. Returns false when nothing more can run
+    function stepOnce() {
+        if (!ensureAssembled()) {
+            message("There is no assembled program to run. Fix the errors first.", "err");
+            narrationNote("There is no assembled program to run. Fix the errors in the Editor first.", "stop");
+            return false;
+        }
+
+        if (isFinished(machine)) {
+            $("status").textContent = `Program complete after ${machine.cycle} cycles.`;
+            return false;
+        }
+
+        const before = structuredClone(machine); // to recover from a fault
+
+        try {
+            const trace = clock(machine);
+
+            history.push(before);
+            narrateCycle(trace);
+        } catch (error) {
+            machine = before;
+            message(error.message, "err");
+            narrationNote(error.message, "stop");
+            renderMachine();
+            return false;
+        }
+
+        renderMachine();
+
+        if (isFinished(machine)) {
+            $("status").textContent = `Program complete after ${machine.cycle} cycles.`;
+            message(`Program complete after ${machine.cycle} cycles.`, "okmsg");
+            narrationNote(`Program complete after ${machine.cycle} cycles.`, "done");
+            return false;
+        }
+
+        $("status").textContent = `Cycle ${machine.cycle}`;
+
+        return true;
+    }
+
+
+    function stopRunning() {
+        clearInterval(runTimer);
+        runTimer = null;
+        $("runBtn").textContent = "▶ Run";
+    }
+
+
+    function toggleRun() {
+        if (runTimer) {
+            stopRunning();
+            return;
+        }
+
+        $("runBtn").textContent = "⏸ Pause";
+
+        let first = true; // Run always moves at least one cycle, so it can leave a breakpoint
+
+        runTimer = setInterval(() => {
+            if (!first && breakpoints.has(machine.pc) && machine.pc >> 2 < machine.instructionMemory.length) {
+                stopRunning();
+                $("status").textContent = `Paused at breakpoint ${hex32(machine.pc)} (cycle ${machine.cycle}).`;
+                narrationNote(`Paused: the next instruction to fetch, at ${hex32(machine.pc)}, has a breakpoint.`, "stop");
+                return;
+            }
+
+            first = false;
+
+            if (!stepOnce()) {
+                stopRunning();
+            }
+        }, Math.max(10, +$("delay").value || 300));
+    }
+
+
+
+
+
 
     // Load the default example.
     load(EXAMPLES.sum);
