@@ -22,7 +22,7 @@ jobs:
       - name: Collect the site
         run: |
           mkdir _site
-          cp index.html style.css _site/
+          cp index.html styles/*.css _site/
           cp -r src _site/src
       - uses: actions/upload-pages-artifact@v3
         with:
