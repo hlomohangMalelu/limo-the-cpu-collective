@@ -30,9 +30,9 @@ jobs:
 
       - name: Collect the site
         run: |
-          mkdir _site
-          cp index.html styles/style.css styles/m3.css _site/
-          cp -r src _site/src
+          mkdir -p _site
+          cp index.html _site/
+          cp -r styles src _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
