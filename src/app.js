@@ -541,7 +541,7 @@
     function stopRunning() {
         clearInterval(runTimer);
         runTimer = null;
-        $("runBtn").textContent = "▶ Run";
+        document.querySelector(".runBtn").textContent = "Run";
     }
 
     function toggleRun() {
@@ -550,7 +550,7 @@
             return;
         }
 
-        $("runBtn").textContent = "⏸ Pause";
+        document.querySelector(".runBtn").textContent = "Pause";
 
         let first = true; // Run always moves at least one cycle, so it can leave a breakpoint
 
@@ -647,8 +647,6 @@
         stopRunning();
         stepOnce();
     };
-    $("runBtn").onclick = toggleRun;
-    $("reset").onclick = resetProcessor;
 
     // Load the default example: M3 has no hazard units, so it must be hazard-free.
     load(EXAMPLES["hazard-free"]);

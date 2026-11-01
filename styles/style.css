@@ -348,7 +348,8 @@ td {
     white-space: nowrap;
 }
 
-#regTable td:nth-child(3) {
+#regTable td:nth-child(3),
+#regTable2 td:nth-child(3) {
     color: #004d9a;
 }
 
@@ -356,7 +357,8 @@ td {
     background: #ffb81c;
 }
 
-#regTable .pcrow td {
+#regTable .pcrow td,
+#regTable2 .pcrow td {
     border-top: 2px solid #c6cbd0;
     font-weight: 700;
 }
