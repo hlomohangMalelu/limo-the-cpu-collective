@@ -517,6 +517,37 @@
     }
 
 
+    function toggleRun() {
+        if (runTimer) {
+            stopRunning();
+            return;
+        }
+
+        $("runBtn").textContent = "⏸ Pause";
+
+        let first = true; // Run always moves at least one cycle, so it can leave a breakpoint
+
+        runTimer = setInterval(() => {
+            if (!first && breakpoints.has(machine.pc) && machine.pc >> 2 < machine.instructionMemory.length) {
+                stopRunning();
+                $("status").textContent = `Paused at breakpoint ${hex32(machine.pc)} (cycle ${machine.cycle}).`;
+                narrationNote(`Paused: the next instruction to fetch, at ${hex32(machine.pc)}, has a breakpoint.`, "stop");
+                return;
+            }
+
+            first = false;
+
+            if (!stepOnce()) {
+                stopRunning();
+            }
+        }, Math.max(10, +$("delay").value || 300));
+    }
+
+
+
+
+
+    
     // Load the default example.
     load(EXAMPLES.sum);
 })();
