@@ -199,4 +199,31 @@
             ctl,
         };
     }
+
+    /** IF: fetch the word at the PC and advance the PC. Returns IF/ID. */
+    function fetch(state, trace) {
+        const index = state.pc >> 2;
+
+        if (index >= state.instructionMemory.length) {
+            return BUBBLE; // past the end of the program
+        }
+
+        const instr = state.instructionMemory[index];
+
+        trace.active[0] = true;
+        trace.instrs[0] = instr;
+        Object.assign(trace.values, { pc: state.pc, pcPlus4: state.pc + 4 });
+
+        const fetched = {
+            valid: true,
+            pc: state.pc,
+            pcPlus4: state.pc + 4,
+            instr,
+        };
+
+        state.pc += 4;
+
+        return fetched;
+    }
+
 });
