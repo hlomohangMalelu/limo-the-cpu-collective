@@ -510,6 +510,13 @@
     }
 
 
+    function stopRunning() {
+        clearInterval(runTimer);
+        runTimer = null;
+        $("runBtn").textContent = "▶ Run";
+    }
+
+
     // Load the default example.
     load(EXAMPLES.sum);
 })();
