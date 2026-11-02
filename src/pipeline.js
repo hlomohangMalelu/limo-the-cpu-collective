@@ -226,4 +226,49 @@
         return fetched;
     }
 
+        /** EX: ALU and branch decision. Returns EX/MEM. */
+    function execute(idex, trace) {
+        if (!idex.valid) {
+            return BUBBLE;
+        }
+
+        trace.active[2] = true;
+        trace.instrs[2] = idex.instr;
+
+        const { ctl } = idex;
+        const operandB = ctl.ALUSrc ? idex.imm : idex.rs2Val;
+        const aluResult = alu(ctl.ALUctl, idex.rs1Val, operandB);
+
+        // lekana (funct3 0) branches when rs1 - rs2 == 0, fapana (1) when it is not.
+        const branchTaken =
+            !!ctl.Branch && (idex.funct3 === 0 ? aluResult === 0 : aluResult !== 0);
+
+        Object.assign(trace.values, {
+            aluOp: ctl.ALUctl,
+            aluA: idex.rs1Val,
+            aluB: operandB,
+            aluResult,
+            branchTaken,
+            branchTarget: idex.pc + idex.imm,
+        });
+
+        return {
+            valid: true,
+            pc: idex.pc,
+            instr: idex.instr,
+            rd: idex.rd,
+            aluResult,
+            storeData: idex.rs2Val,
+            branchTaken,
+            branchTarget: idex.pc + idex.imm,
+            ctl: {
+                RegWrite: ctl.RegWrite,
+                MemRead: ctl.MemRead,
+                MemWrite: ctl.MemWrite,
+                MemtoReg: ctl.MemtoReg,
+                Branch: ctl.Branch,
+            },
+        };
+    }
+
 });
